@@ -52,6 +52,10 @@ class RewardSignals:
                    +/-7 = at a wall.
     heading_error: angle (rad) between the car's heading and the track
                    direction; 0 = pointing along the track.
+    car_contact:   True while touching ANOTHER CAR this step. Always False
+                   in the single-car RaceEnv; only OvertakeEnv (racing in
+                   traffic) produces car contacts.
+    new_car_hit:   True only on the first step of a car-car contact.
     """
 
     delta_s: float
@@ -61,6 +65,8 @@ class RewardSignals:
     terminated: bool
     lateral: float
     heading_error: float
+    car_contact: bool = False
+    new_car_hit: bool = False
 
 
 class RaceEnv(gym.Env):

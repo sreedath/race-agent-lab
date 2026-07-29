@@ -19,6 +19,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
+from racing.env.overtake_env import OvertakeEnv
 from racing.env.race_env import RaceEnv
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -44,9 +45,13 @@ def sample_reward(sig) -> float:
     return reward
 
 
-def make_env(reward_fn, rank: int):
+def make_env(reward_fn, rank: int, n_opponents: int = 0):
     def _init():
-        env = RaceEnv(reward_fn=reward_fn)
+        env = (
+            OvertakeEnv(reward_fn=reward_fn, n_opponents=n_opponents)
+            if n_opponents > 0
+            else RaceEnv(reward_fn=reward_fn)
+        )
         env.reset(seed=1000 + rank)
         return env
 
@@ -60,18 +65,29 @@ def linear_schedule(initial: float):
     return fn
 
 
-def train(reward_fn, steps: int, seed: int = 0, run_name: str = "agent") -> PPO:
+def train(
+    reward_fn,
+    steps: int,
+    seed: int = 0,
+    run_name: str = "agent",
+    n_opponents: int = 0,
+) -> PPO:
     """Train PPO with YOUR reward function; returns the (possibly partial)
-    model even if interrupted with the stop button."""
+    model even if interrupted with the stop button.
+
+    n_opponents > 0 trains IN TRAFFIC (RaceTrackOvertake-v0): your reward
+    function can then use sig.car_contact / sig.new_car_hit to teach clean
+    overtaking."""
     # Fail fast on a broken reward function before spawning workers.
-    probe = RaceEnv(reward_fn=reward_fn)
-    probe.reset(seed=0)
+    probe = make_env(reward_fn, 0, n_opponents)()
     probe.step(probe.action_space.sample())
 
     torch.set_num_threads(2)
     RUNS.mkdir(exist_ok=True)
     vec = VecMonitor(
-        SubprocVecEnv([make_env(reward_fn, i) for i in range(NUM_ENVS)])
+        SubprocVecEnv(
+            [make_env(reward_fn, i, n_opponents) for i in range(NUM_ENVS)]
+        )
     )
     model = PPO(
         "MlpPolicy",

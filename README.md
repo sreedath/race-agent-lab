@@ -22,16 +22,30 @@ then race it against your classmates in the
 ## What's in here
 
 ```
-train_agent.ipynb      the one-click Colab notebook (start here)
-racing/sim/            car physics, walls, LiDAR (identical to the arena)
-racing/track/          track geometry pipeline
-racing/env/race_env.py Gymnasium env; takes YOUR reward function
-racing/train/          PPO training + policy export
-shared/                track and physics constants shared with the arena
+train_agent.ipynb          the one-click Colab notebook (start here)
+racing/sim/                car physics, walls, LiDAR (identical to the arena)
+racing/track/              track geometry pipeline
+racing/env/race_env.py     Gymnasium env; takes YOUR reward function
+racing/env/overtake_env.py same, but racing in traffic (see below)
+racing/train/              PPO training + policy export
+shared/                    track/physics constants + frozen opponent policies
 ```
 
 The physics here is bit-for-bit the same simulation the browser arena runs,
 which is why a policy trained in Colab drives identically in the race.
+
+## Level 2: overtaking (optional)
+
+`train(reward_fn, steps, n_opponents=3)` trains in traffic: your car spawns
+behind slower pre-trained cars and the LiDAR sees them as obstacles, exactly
+like in the arena. Two extra reward signals appear:
+
+- `sig.car_contact`: True while touching another car this step
+- `sig.new_car_hit`: True only on the first step of a car-car contact
+
+Penalize those (and keep rewarding progress) and your agent learns to pass
+cleanly instead of ramming. With `n_opponents=0` (the default) these signals
+are always False and training is the classic solo time-trial.
 
 ## Rules of the race
 
