@@ -2,7 +2,7 @@
 
 Train a reinforcement-learning racing agent in your browser, no installs,
 then race it against your classmates in the
-[City Grand Prix arena](https://city-grand-prix.vercel.app).
+[City Grand Prix arena](https://ppo-racing-arena.vercel.app).
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sreedath/race-agent-lab/blob/main/train_agent.ipynb)
 
